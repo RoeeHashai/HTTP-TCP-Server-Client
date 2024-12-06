@@ -84,7 +84,6 @@ while True:
                 break
         if not connection_alive:
             break
-
         next_req = body[content_length:]
         body = body[:content_length]
         buffer = next_req
