@@ -1,1 +1,7 @@
 .DS_Store
+venv
+pcap_files
+__pycache__
+.idea
+client_out.log
+ex2.pdf
