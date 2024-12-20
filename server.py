@@ -6,7 +6,6 @@ def read_file_content(filename):
     Read the content of a file and return it as a string if a text file, or as bytes if an image file.
     Returns:
         content (bytes): The content of the file.
-        is_binary (bool): True if the content is binary, False if text.
     """
     base_dir = 'files'
     if filename == '/':
@@ -17,9 +16,10 @@ def read_file_content(filename):
     file_path = os.path.join(base_dir, filename.strip('/'))
     if not os.path.exists(file_path) or os.path.isdir(file_path):
         return 'Not Found'
-    with open(file_path, 'rb') as f:
+    mode = 'rb' if file_path.endswith(('.jpg', '.jpeg', '.png', 'ico')) else 'r'
+    with open(file_path, mode) as f:
         content = f.read()
-    return content
+    return content.encode() if mode == 'r' else content
 
 def send_all(sock, data):
     """

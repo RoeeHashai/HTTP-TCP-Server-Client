@@ -13,7 +13,13 @@ def send_request(sock, path):
     http_req = f'GET {path} HTTP/1.1\r\nHost: {IP}:{PORT}\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n'
     # print(f"[Send Request] Sending request for path: {path}")
     try:
-        sock.sendall(http_req.encode())
+        # sock.sendall(http_req.encode())
+        bytes_sent = 0
+        while bytes_sent < len(http_req):
+            sent = sock.send(http_req[bytes_sent:].encode())
+            if not sent:
+                break
+            bytes_sent += sent
         # print("[Send Request] Request sent successfully.")
     except ConnectionResetError as e:
         # print(f"[Send Requset] Connection reset while sending: {e}")
@@ -108,7 +114,9 @@ def main():
                 if path == '/':
                     path = '/index.html'
                 filename = os.path.basename(path)
-                with open(filename, 'wb') as f:
+                mode = 'wb' if path.endswith(('.png', '.jpg', '.jpeg','ico')) else 'w'
+                body = body.decode() if mode == 'w' else body
+                with open(filename, mode) as f:
                     f.write(body)                
                 # Clear the last_path after a successful request-response cycle
                 last_path = None
