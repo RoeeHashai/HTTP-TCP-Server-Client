@@ -159,7 +159,7 @@ class TestServerClientInteraction(unittest.TestCase):
         """Test the transfer of large files"""
         large_file_path = 'files/large_file.txt'
         with open(large_file_path, 'w') as file:
-            file.write('Hello World!' * 1000000)
+            file.write('Hello World!' * 100000000)
         response = self.send_request_and_receive_response('/large_file.txt')
         self.assertIn('HTTP/1.1 200 OK', response)
         # Ensure the file was created by the client
@@ -178,7 +178,6 @@ class TestServerClientInteraction(unittest.TestCase):
         def make_request(path):
             resp = self.send_request_and_receive_response(path)
             self.assertIn('HTTP/1.1 200 OK', resp)
-            
             # Retrieve the filename from the path and check file existence
             filename = path.split('/')[-1]
             self.assertTrue(os.path.exists(filename), f"{filename} not created")
@@ -189,14 +188,12 @@ class TestServerClientInteraction(unittest.TestCase):
             with open(filename, mode) as downloaded_file:
                 downloaded_content = downloaded_file.read()
             self.assertEqual(original_content, downloaded_content, f"Content mismatch for {filename}")
-
             # Clean up by removing the file after verification
             os.remove(filename)
-
+            
         from threading import Thread
         paths = ['/index.html', '/a/1.jpg', '/c/footube.css']
         threads = [Thread(target=make_request, args=(path,)) for path in paths]
-
         for thread in threads:
             thread.start()
         for thread in threads:
@@ -204,25 +201,25 @@ class TestServerClientInteraction(unittest.TestCase):
             
     def test11(self):
         """Test to check that the server is reading the files in the correct format (comparing text read as bytes)."""
+        # HTML file
         text_file_path = '/index.html'
         response = self.send_request_and_receive_response(text_file_path)
         self.assertIn('HTTP/1.1 200 OK', response)
         # Ensure the file was created by the client
         filename = text_file_path.split('/')[-1]
         self.assertTrue(os.path.exists(filename), f"[TEST 11] {text_file_path} file not created by the client")
-        
         # Read the file saved by the client in binary mode
         with open(filename, 'rb') as file:
             retrieved_contents = file.read()
-        
         # Open the source file in text mode, read, and encode to bytes
         expected_file_path = f'files{text_file_path}'
         with open(expected_file_path, 'r') as file:
             # Read the file content as string, then encode it to bytes
             expected_contents = file.read().encode()
-        
         # Compare the bytes
         self.assertEqual(expected_contents, retrieved_contents, f"[TEST 11] {text_file_path} file content does not match the expected content")
+        
+        # Image file
         img_file_path = '/favicon.ico'
         response = self.send_request_and_receive_response(img_file_path)
         self.assertIn('HTTP/1.1 200 OK', response)
@@ -238,7 +235,5 @@ class TestServerClientInteraction(unittest.TestCase):
         os.remove('index.html')
         os.remove('favicon.ico')
         
-        
-
 if __name__ == '__main__':
     unittest.main()
