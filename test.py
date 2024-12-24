@@ -2,9 +2,7 @@ import unittest
 import subprocess
 import time
 import os
-import sys
 import socket
-
 
 class TestServerClientInteraction(unittest.TestCase):
     @classmethod
