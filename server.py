@@ -10,7 +10,7 @@ def read_file_content(filename):
     base_dir = 'files'
     if filename == '/':
         filename = '/index.html'
-    elif not filename.startswith('/') or filename.endswith('/'):
+    if filename.endswith('/'):
         return 'Not Found'
 
     file_path = os.path.join(base_dir, filename.strip('/'))

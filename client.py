@@ -13,7 +13,6 @@ def send_request(sock, path):
     http_req = f'GET {path} HTTP/1.1\r\nHost: {IP}:{PORT}\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n'
     # print(f"[Send Request] Sending request for path: {path}")
     try:
-        # sock.sendall(http_req.encode())
         bytes_sent = 0
         while bytes_sent < len(http_req):
             sent = sock.send(http_req[bytes_sent:].encode())
