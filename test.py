@@ -96,11 +96,12 @@ class TestServerClientInteraction(unittest.TestCase):
         
     def test4(self):
         """Test checks differnt requests of files to the server one after the other"""
-        list_files = ['/index.html', 'index.html','/a/b/ref.html','/c/footube.css','c/Footube.html','/c/footube.js','/result.html', '/', '']
+        list_files = ['/index.html', 'index.html','/a/b/ref.html','/c/footube.css','c/Footube.html','/c/footube.js','/result.html', '/', '', '   ']
         for path in list_files:
             response = self.send_request_and_receive_response(path)
             self.assertIn('HTTP/1.1 200 OK', response, f"[TEST 4] did not return correctly for {path}")
             # Ensure the file was created by the client
+            path = path.strip()
             if not path.startswith('/'):
                 path = '/' + path
             if path == '/':
