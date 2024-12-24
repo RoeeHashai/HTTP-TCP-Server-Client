@@ -110,6 +110,9 @@ def main():
             top_header, body, buffer, code, location = receive_response(s, buffer)
             print(top_header)
             if code == 200:
+                path = path.strip()
+                if not path.startswith('/'):
+                    path = '/' + path
                 if path == '/':
                     path = '/index.html'
                 filename = os.path.basename(path)

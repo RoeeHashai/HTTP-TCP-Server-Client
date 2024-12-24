@@ -7,11 +7,13 @@ def read_file_content(filename):
     Returns:
         content (bytes): The content of the file.
     """
-    base_dir = 'files'
+    if not filename.startswith('/'):
+        filename = '/' + filename
     if filename == '/':
         filename = '/index.html'
     if filename.endswith('/'):
         return 'Not Found'
+    base_dir = 'files'
 
     file_path = os.path.join(base_dir, filename.strip('/'))
     if not os.path.exists(file_path) or os.path.isdir(file_path):
@@ -59,6 +61,7 @@ def read_header(client_socket, buffer):
             break
     if '\r\n\r\n' in buffer:
             header, buffer = buffer.split('\r\n\r\n', 1)
+            header += '\r\n\r\n'
     else:
         header = buffer
         buffer = ''
@@ -77,7 +80,7 @@ def parse_header(header):
     method, path, connection_status, content_length = '', '', '', 0
     for line in headers:
         if line.startswith('GET'):
-            method, path, _ = line.split(' ')
+            method, path, *rest = line.split(' ')
         elif line.startswith('Connection:'):
             connection_status = line.split(': ')[1]
         elif line.startswith('Content-Length:'):
@@ -119,7 +122,7 @@ def process(client_socket, path, connection_status):
     Returns:
         connsction_status (str): The connection status of the response.
     """
-    if path == '/redirect':
+    if path == '/redirect' or path == 'redirect':
             code = 301
             connection_status = 'close'
             location = '/result.html'
@@ -170,14 +173,15 @@ while True:
         if not connection_alive:
             break
         # print(f'[Request-Header]\n{header}\n[End-Request-Header]')
-        print(header)
+        print(header, end='')
         # parse the header
         method, path, connection_status, content_length = parse_header(header)
         # read the body
         body, buffer, connection_alive = read_body(client_socket, buffer, content_length)
         if not connection_alive:
             break
-        print(body)
+        if body:
+            print(body)
         # print(f'[Request-Body]\n{body}\n[End-Request-Body]')
         # print(f'[Buffer] Buffer for next request:\n{buffer}\n[End-Buffer]')
         

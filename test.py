@@ -2,7 +2,9 @@ import unittest
 import subprocess
 import time
 import os
+import sys
 import socket
+
 
 class TestServerClientInteraction(unittest.TestCase):
     @classmethod
@@ -67,33 +69,49 @@ class TestServerClientInteraction(unittest.TestCase):
     def test3(self):
         """Test a redirect response from the server."""
         response = self.send_request_and_receive_response('/redirect')
-        self.assertIn('HTTP/1.1 301 Moved Permanently', response, "[TEST REDIRECT] Redirect response did not return correctly")
+        self.assertIn('HTTP/1.1 301 Moved Permanently', response, "[TEST 3] Redirect response did not return correctly")
         response = self.client_process.stdout.readline()
-        self.assertIn('HTTP/1.1 200 OK', response, "[TEST REDIRECT] Redirected file did not return correctly")
+        self.assertIn('HTTP/1.1 200 OK', response, "[TEST 3] Redirected file did not return correctly")
         filename = 'result.html'
-        self.assertTrue(os.path.exists(filename), "[TEST REDIRECT] /result.html file not created by the client")
+        self.assertTrue(os.path.exists(filename), "[TEST 3] /result.html file not created by the client")
         with open(filename, 'r') as file:
             retrieved_contents = file.read()
         expected_file_path = 'files/result.html'
         with open(expected_file_path, 'r') as file:
             expected_contents = file.read()
-        self.assertEqual(expected_contents, retrieved_contents, "[TEST REDIRECT] /result.html file content does not match the expected content")
+        self.assertEqual(expected_contents, retrieved_contents, "[TEST 3] /result.html file content does not match the expected content")
+        os.remove(filename)
+        
+        response = self.send_request_and_receive_response('redirect')
+        self.assertIn('HTTP/1.1 301 Moved Permanently', response, "[TEST 3] Redirect response did not return correctly")
+        response = self.client_process.stdout.readline()
+        self.assertIn('HTTP/1.1 200 OK', response, "[TEST 3] Redirected file did not return correctly")
+        filename = 'result.html'
+        self.assertTrue(os.path.exists(filename), "[TEST 3] /result.html file not created by the client")
+        with open(filename, 'r') as file:
+            retrieved_contents = file.read()
+        expected_file_path = 'files/result.html'
+        with open(expected_file_path, 'r') as file:
+            expected_contents = file.read()
+        self.assertEqual(expected_contents, retrieved_contents, "[TEST 3] /result.html file content does not match the expected content")
         os.remove(filename)
         
     def test4(self):
-        """Test checks 7 differnt requests of files to the server one after the other."""
-        list_files = ['/index.html', 'index.html','/a/b/ref.html','/c/footube.css','c/Footube.html','/c/footube.js','/result.html']
+        """Test checks differnt requests of files to the server one after the other"""
+        list_files = ['/index.html', 'index.html','/a/b/ref.html','/c/footube.css','c/Footube.html','/c/footube.js','/result.html', '/', '']
         for path in list_files:
             response = self.send_request_and_receive_response(path)
-            self.assertIn('HTTP/1.1 200 OK', response)
+            self.assertIn('HTTP/1.1 200 OK', response, f"[TEST 4] did not return correctly for {path}")
             # Ensure the file was created by the client
+            if not path.startswith('/'):
+                path = '/' + path
+            if path == '/':
+                path = '/index.html'
             filename = path.split('/')[-1]
             self.assertTrue(os.path.exists(filename), f"[TEST 4] {path} file not created by the client")
             with open(filename, 'r') as file:
                 retrieved_contents = file.read()
             # Check if the content of the file is correct
-            if not path.startswith('/'):
-                path = '/' + path
             expected_file_path = f'files{path}'
             with open(expected_file_path, 'r') as file:
                 expected_contents = file.read()
@@ -123,7 +141,7 @@ class TestServerClientInteraction(unittest.TestCase):
     
     def test6(self):
         """Test 404 Not Found - send bad requests to server"""
-        bad_req = ['Roee', '','//','///','/////','bad.html','/a','/a/b','/a/b/','/a/b/1','/a/b/1.','/a/b/1.j','/a/b/1.jp','index.html/']
+        bad_req = ['Roee','//','///','/////','bad.html','/a','/a/b','/a/b/','/a/b/1','/a/b/1.','/a/b/1.j','/a/b/1.jp','index.html/']
         for path in bad_req:
             response = self.send_request_and_receive_response(path)
             self.assertIn('HTTP/1.1 404 Not Found', response)
@@ -240,6 +258,34 @@ class TestServerClientInteraction(unittest.TestCase):
         self.assertEqual(expected_contents, retrieved_contents, f"[TEST 11] {img_file_path} file content does not match the expected content")
         os.remove('index.html')
         os.remove('favicon.ico')
+    
+    def test12(self):
+        """Test a very large HTTP header."""
+        header = 'GET /index.html HTTP/1.1\r\n'
+        header += 'Long-Header: ' + 'a' * 1000000 + '\r\n'
+        header += 'Connection: keep-alive\r\n'
+        header += '\r\n'
+        socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_client.connect(('localhost', 8000))
+        socket_client.send(header.encode())
+        response = socket_client.recv(4096).decode()
+        response = response.split('\r\n')[0]
+        self.assertIn('HTTP/1.1 200 OK', response)
+        socket_client.close()
+    
+    def test13(self):
+        """Test a HTTP request with a body."""
+        header = 'GET /index.html HTTP/1.1\r\n'
+        header += 'Content-Length: 10\r\n'
+        header += '\r\n'
+        header += '0123456789'
+        socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_client.connect(('localhost', 8000))
+        socket_client.send(header.encode())
+        response = socket_client.recv(4096).decode()
+        response = response.split('\r\n')[0]
+        self.assertIn('HTTP/1.1 200 OK', response)
+        socket_client.close()
         
 if __name__ == '__main__':
     unittest.main()
