@@ -140,7 +140,7 @@ class TestServerClientInteraction(unittest.TestCase):
     
     def test6(self):
         """Test 404 Not Found - send bad requests to server"""
-        bad_req = ['Roee','//','///','/////','bad.html','/a','/a/b','/a/b/','/a/b/1','/a/b/1.','/a/b/1.j','/a/b/1.jp','index.html/']
+        bad_req = ['Roee','//','///','/////','bad.html','/a','/a/b','/a/b/','/a/b/1','/a/b/1.','/a/b/1.j','/a/b/1.jp','index.html/','   ']
         for path in bad_req:
             response = self.send_request_and_receive_response(path)
             self.assertIn('HTTP/1.1 404 Not Found', response)
@@ -197,7 +197,7 @@ class TestServerClientInteraction(unittest.TestCase):
         os.remove(large_file_path)
         
     def test10(self):
-        """Test handling of concurrent requests to the server and validate file integrity."""
+        """Test handling of concurrent requests to the server and validate file content."""
         def make_request(path):
             resp = self.send_request_and_receive_response(path)
             self.assertIn('HTTP/1.1 200 OK', resp)
@@ -213,7 +213,6 @@ class TestServerClientInteraction(unittest.TestCase):
             self.assertEqual(original_content, downloaded_content, f"Content mismatch for {filename}")
             # Clean up by removing the file after verification
             os.remove(filename)
-            
         from threading import Thread
         paths = ['/index.html', '/a/1.jpg', '/c/footube.css']
         threads = [Thread(target=make_request, args=(path,)) for path in paths]

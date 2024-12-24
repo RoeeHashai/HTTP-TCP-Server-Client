@@ -14,7 +14,6 @@ def read_file_content(filename):
     if filename.endswith('/'):
         return 'Not Found'
     base_dir = 'files'
-
     file_path = os.path.join(base_dir, filename.strip('/'))
     if not os.path.exists(file_path) or os.path.isdir(file_path):
         return 'Not Found'
@@ -80,7 +79,7 @@ def parse_header(header):
     method, path, connection_status, content_length = '', '', '', 0
     for line in headers:
         if line.startswith('GET'):
-            method, path, *rest = line.split(' ')
+            path = line.split('GET ')[1].split(' HTTP/1.1')[0]
         elif line.startswith('Connection:'):
             connection_status = line.split(': ')[1]
         elif line.startswith('Content-Length:'):
