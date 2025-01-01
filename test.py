@@ -273,13 +273,28 @@ class TestServerClientInteraction(unittest.TestCase):
     
     def test13(self):
         """Test a HTTP request with a body."""
-        header = 'GET /index.html HTTP/1.1\r\n'
-        header += 'Content-Length: 10\r\n'
-        header += '\r\n'
-        header += '0123456789'
+        req = 'GET /index.html HTTP/1.1\r\n'
+        req += 'Content-Length: 10\r\n'
+        req += 'Connection: close\r\n'
+        req += '\r\n'
+        req += '0123456789'
         socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_client.connect(('localhost', 8000))
-        socket_client.send(header.encode())
+        socket_client.send(req.encode())
+        response = socket_client.recv(4096).decode()
+        response = response.split('\r\n')[0]
+        self.assertIn('HTTP/1.1 200 OK', response)
+        socket_client.close()
+
+    def test14(self):
+        """Test a HTTP request with a very large body."""
+        req = 'GET /index.html HTTP/1.1\r\n'
+        req += 'Content-Length: 100000000\r\n'
+        req += '\r\n'
+        req += 'a' * 100000000
+        socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_client.connect(('localhost', 8000))
+        socket_client.send(req.encode())
         response = socket_client.recv(4096).decode()
         response = response.split('\r\n')[0]
         self.assertIn('HTTP/1.1 200 OK', response)

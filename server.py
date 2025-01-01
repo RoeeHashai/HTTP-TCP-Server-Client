@@ -76,7 +76,7 @@ def parse_header(header):
         content_length (int): The content length of the request.
     """
     headers = header.split('\r\n')
-    method, path, connection_status, content_length = '', '', '', 0
+    method, path, connection_status, content_length = '', '', 'keep-alive', 0
     for line in headers:
         if line.startswith('GET'):
             path = line.split('GET ')[1].split(' HTTP/1.1')[0]
