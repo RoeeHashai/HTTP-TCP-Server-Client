@@ -11,7 +11,7 @@ def send_request(sock, path):
         ConnectionResetError: If the connection is reset during send.
     """
     http_req = f'GET {path} HTTP/1.1\r\nConnection: keep-alive\r\n\r\n'
-    print(f"[Send Request] Sending request for path: {path}")
+    # print(f"[Send Request] Sending request for path: {path}")
     try:
         bytes_sent = 0
         while bytes_sent < len(http_req):
@@ -19,12 +19,12 @@ def send_request(sock, path):
             if not sent:
                 break
             bytes_sent += sent
-        print("[Send Request] Request sent successfully.")
+        # print("[Send Request] Request sent successfully.")
     except ConnectionResetError as e:
-        print(f"[Send Requset] Connection reset while sending: {e}")
+        # print(f"[Send Requset] Connection reset while sending: {e}")
         raise
     except socket.error as e:
-        print(f"[Send Request] Error sending request: {e}")
+        # print(f"[Send Request] Error sending request: {e}")
         raise
     return sock
 
@@ -43,10 +43,10 @@ def receive_response(sock, buffer):
                 raise ConnectionResetError("[Receive Response] Server closed the connection while receiving.")
             buffer.extend(part)
     except ConnectionResetError as e:
-        print(f"[Receive Response] Connection reset while receiving: {e}")
+        # print(f"[Receive Response] Connection reset while receiving: {e}")
         raise
     except socket.error as e:
-        print(f"[Receive Response] Socket error during receive: {e}")
+        # print(f"[Receive Response] Socket error during receive: {e}")
         raise
 
     parts = buffer.split(b'\r\n\r\n', 1)
@@ -71,10 +71,10 @@ def receive_response(sock, buffer):
                 raise ConnectionResetError("[Receive Response] Server closed the connection while receiving the body.")
             body.extend(part)
     except ConnectionResetError as e:
-        print(f"[Receive Response] Connection reset while receiving: {e}")
+        # print(f"[Receive Response] Connection reset while receiving: {e}")
         raise
     except socket.error as e:
-        print(f"[Receive Response] Socket error during receive: {e}")
+        # print(f"[Receive Response] Socket error during receive: {e}")
         raise
     return headers[0], body[:content_length], body[content_length:], code, location
 
@@ -85,7 +85,7 @@ def reconnect_socket(sock):
     sock.close()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((IP, PORT))
-    print("[Control] Reconnected to the server.")
+    # print("[Control] Reconnected to the server.")
     return sock
 
 def main():
@@ -94,6 +94,7 @@ def main():
     PORT = int(sys.argv[2])
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP, PORT))
     last_path = None 
     buffer = bytearray()
     while True:
@@ -102,7 +103,7 @@ def main():
         else:
             # Retransmit the previous request
             path = last_path
-            print(f"[Main] Retransmitting the previous path: {path}")
+            # print(f"[Main] Retransmitting the previous path: {path}")
         try:
             # Attempt to send the request
             s = send_request(s, path)
@@ -122,22 +123,22 @@ def main():
                 # Clear the last_path after a successful request-response cycle
                 last_path = None
             elif code == 301:
-                print(f"[Response] Redirecting to {location}")
+                # print(f"[Response] Redirecting to {location}")
                 s = reconnect_socket(s)
                 buffer = bytearray()
                 last_path = location
             elif code == 404:
-                print("[Response] Not Found")
+                # print("[Response] Not Found")
                 last_path = None                
                 
         except ConnectionResetError:
-            print("[Control] Connection reset detected. Reconnecting and retransmitting...")
+            # print("[Control] Connection reset detected. Reconnecting and retransmitting...")
             s = reconnect_socket(s)
             buffer = bytearray()
             last_path = path
 
         except socket.error as e:
-            print(f"[Control] An unexpected error occurred: {e}")
+            # print(f"[Control] An unexpected error occurred: {e}")
             s = reconnect_socket(s)
             buffer = bytearray()
             last_path = path
